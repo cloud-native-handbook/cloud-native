@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-master
+  namespace: database
+  labels:
+    name: redis-master
+spec:
+  selector:
+    redis-master: "true"
+  ports:
+  - port: 6379
+    targetPort: 6379
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: redis-master
+  namespace: database
+  labels:
+    name: redis-master
+spec:
+  serviceName: redis-master
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: redis-master
+        redis-master: "true"
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: redis
+        image: gcr.io/google_containers/redis:v1
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 6379
+        env:
+        - name: MASTER
+          value: "true"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+        - name: redis-master-config
+          mountPath: /redis-master
+      volumes:
+      - name: redis-master-config
+        configMap:
+          name: redis-config
+          items:
+          - key: redis-master.conf
+            path: ./redis.conf
+  volumeClaimTemplates:
+  - metadata:
+      name: redis-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: rbd
+      resources:
+        requests:
+          storage: 5Gi

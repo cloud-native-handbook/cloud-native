@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: resourcemanager
+  namespace: yarn
+spec:
+  clusterIP: None
+  selector:
+    app: yarn
+    component: resourcemanager
+  ports:
+  - name: web
+    port: 8088
+    targetPort: 8088
+  - name: scheduler
+    port: 8030
+    targetPort: 8030
+  - name: resource-tracker
+    port: 8031
+    targetPort: 8031
+  - name: resourcemanager
+    port: 8032
+    targetPort: 8032
+  - name: admin
+    port: 8033
+    targetPort: 8033
+
+---    
+
+apiVersion: apps/v1beta2
+kind: StatefulSet
+metadata:
+  name: rm
+  namespace: yarn
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: yarn
+      component: resourcemanager
+  serviceName: resourcemanager
+  template:
+    metadata:
+      labels:
+        app: yarn
+        component: resourcemanager
+    spec:
+      containers:
+      - name: resourcemanager
+        image: dockerce/hdfs:2.7.5
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: webui
+          containerPort: 8088
+        - name: scheduler
+          containerPort: 8030
+        - name: resourcetracker
+          containerPort: 8031
+        - name: resourcemanager
+          containerPort: 8032
+        - name: admin
+          containerPort: 8033
+        resources:
+          requests:
+            cpu: 10m
+            memory: 256Mi
+          limits:
+            cpu: "2"
+            memory: 10Gi
+        livenessProbe:
+          tcpSocket:
+            port: 8032
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        readinessProbe:
+          tcpSocket:
+            port: 8032
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        args:
+        - "yarn"
+        - "resourcemanager"
+        - "-Dmapreduce.framework.name=yarn"
+        - "-Dmapreduce.jobhistory.address=rm-0.resourcemanager.yarn.svc.cluster.local:10020"
+        - "-Dmapreduce.jobhistory.webapp.address=rm-0.resourcemanager.yarn.svc.cluster.local:19888"
+        - "-Dyarn.resourcemanager.hostname=0.0.0.0"

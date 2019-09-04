@@ -1,0 +1,67 @@
+# 仅限：nvidia-docker2 + nvidia-device-plugin（不设置 resources.limits["nvidia.com/gpu"] 将使用主机的所有 GPU）
+apiVersion: apps/v1beta2
+kind: DaemonSet
+metadata:
+  name: ethminer
+  namespace: ethereum
+spec:
+  selector:
+    matchLabels:
+      app: ethminer
+  template:
+    metadata:
+      labels:
+        app: ethminer
+    spec:
+      nodeSelector:
+        node-type: gpu
+        nvidia.com/gpu-name: "p106-100"
+      containers:
+      - name: ethminer
+        image: dockerce/cuda-ethminer:9.1-0.12.0
+        imagePullPolicy: IfNotPresent
+        command: ["ethminer"]
+        args:
+        - -U
+        - -S
+        - "eu2.ethermine.org:14444"
+        - -FS
+        - "eu1.ethermine.org:4444"
+        - -FS
+        - "us2.ethermine.org:4444"
+        - -FS
+        - "us1.ethermine.org:4444"
+        - -O
+        - "79e478b8825fc50d9fde647ccc97483b5174f66f.$(HOST_IP)"
+        - --farm-recheck
+        - "200"
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            cpu: 100m
+            memory: 320Mi
+        readinessProbe:
+          exec:
+            command:
+            - pgrep
+            - ethminer
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          exec:
+            command:
+            - pgrep
+            - ethminer
+          initialDelaySeconds: 5
+          periodSeconds: 5

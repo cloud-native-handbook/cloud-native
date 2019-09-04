@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: gitlab-ce
+  namespace: gitlab
+spec:
+  type: ClusterIP
+  selector:
+    app: gitlab-ce
+  ports:
+  - name: http
+    port: 80
+  - name: ssh
+    port: 22
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: gitlab-ingress
+  namespace: gitlab
+spec:
+  rules:
+  - host: gitlab.cloud.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: gitlab-ce
+          servicePort: http

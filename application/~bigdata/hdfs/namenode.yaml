@@ -1,0 +1,170 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: namenode
+  namespace: hadoop
+  labels:
+    app: namenode
+spec:
+  type: NodePort
+  ports:
+  - port: 50070
+    name: web
+  selector:
+     app: namenode
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: namenode
+  namespace: hadoop
+spec:
+  serviceName: namenode
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: namenode
+    spec:
+      containers:
+      - name: namenode
+        image: elek/hadoop-hdfs-namenode:2.7.3
+        env:
+        - name: ENSURE_NAMENODE_DIR
+          value: /data/namenode
+        volumeMounts:
+        - name: config
+          mountPath: "/opt/hadoop/etc/hadoop"
+          readOnly: true
+        - name: hdfs-namenode
+          mountPath: "/data/namenode"
+      volumes:
+      - name: config
+        configMap:
+          name: hadoopconf
+  volumeClaimTemplates:
+  - metadata:
+      name: hdfs-namenode
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: rbd-class
+      resources:
+        requests:
+          storage: 100Gi
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: namenode
+  namespace: hadoop
+  labels:
+    app: namenode
+spec:
+  ports:
+  - port: 50070
+    name: web
+  clusterIP: None
+  selector:
+     app: namenode
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: namenode
+  namespace: hadoop
+spec:
+  serviceName: namenode
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: namenode
+    spec:
+      containers:
+        - name: namenode
+          image: elek/hadoop-hdfs-namenode:2.7.3
+          env:
+            - name: ENSURE_NAMENODE_DIR
+              value: /data/namenode
+          volumeMounts:
+            - name: config
+              mountPath: "/opt/hadoop/etc/hadoop"
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: hadoopconf
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: namenode
+  namespace: hadoop
+  labels:
+    app: namenode
+spec:
+  type: NodePort
+  ports:
+  - name: web
+    port: 50070
+    targetPort: 50070
+  - name: rpc
+    port: 9000
+    targetPort:
+  selector:
+     app: namenode
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: namenode
+  namespace: hadoop
+spec:
+  serviceName: namenode
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: namenode
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: namenode
+        image: hdfs:2.7.3
+        ports:
+        - name: web
+          containerPort: 50070
+        - name: rpc
+          containerPort: 9000
+        env:
+        - name: DFS_NAMENODE_NAME_DIR
+          value: /data/namenode
+        args: ["hdfs", "namenode", "-Dfs.defaultFS=hdfs://0.0.0.0:9000", "-Ddfs.namenode.name.dir=/data/namenode", "-Ddfs.replication=3", "-Ddfs.namenode.datanode.registration.ip-hostname-check=false", "-Ddfs.permissions.enabled=false"]
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 50070
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
+          tcpSocket:
+            port: 9000
+        readinessProbe:
+          tcpSocket:
+            port: 9000
+        volumeMounts:
+        - name: hdfs
+          mountPath: /data/namenode
+  volumeClaimTemplates:
+  - metadata:
+      name: hdfs
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: rbd-class
+      resources:
+        requests:
+          storage: 1Gi

@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: namenode-ingress
+  namespace: hadoop
+spec:
+  rules:
+  - host: namenode-0.namenode.hadoop.svc.cluster.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: namenode
+          servicePort: 50070

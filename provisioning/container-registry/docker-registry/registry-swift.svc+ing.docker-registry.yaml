@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry-swift
+  namespace: docker-registry
+spec:
+  selector:
+    app: registry
+  ports:
+  - name: registry
+    port: 5000
+    protocol: TCP
+---
+# http://registry.docker-registry.svc.cluster.local/v2/_catalog
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: registry-swift
+  namespace: docker-registry
+spec:
+  rules:
+  - host: registry.docker-registry.svc.cluster.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: registry-swift
+          servicePort: registry

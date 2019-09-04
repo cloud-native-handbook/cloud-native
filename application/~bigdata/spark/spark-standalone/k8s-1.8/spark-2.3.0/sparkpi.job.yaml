@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: spark-pi
+  namespace: spark
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      name: spark-pi
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: spark-pi
+        image: dockerce/spark:2.3.0
+        resources:
+          requests:
+            cpu: 4000m
+            memory: 16Gi
+          limits:
+            cpu: 4000m
+            memory: 16Gi
+        env:
+        - name: SPARK_VERSION
+          value: "2.3.0"
+        - name: DRIVER_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: DRIVER_CORES
+          valueFrom:
+            resourceFieldRef:
+              resource: requests.cpu
+        - name: DRIVER_MEMORY
+          valueFrom:
+            resourceFieldRef:
+              resource: requests.memory
+        command: [
+          "spark-submit",
+          "--conf", "spark.driver.host=$(DRIVER_HOST)",
+          "--conf", "spark.driver.cores=$(DRIVER_CORES)",
+          "--conf", "spark.driver.memory=$(DRIVER_MEMORY)",
+          "--master", "spark://spark-master.spark.svc.cluster.local:7077",
+          "--class", "org.apache.spark.examples.SparkPi",
+          "--supervise",
+          "--executor-memory=4G",
+          "--total-executor-cores=12",
+          "--num-executors=10",
+          "/usr/local/spark/examples/jars/spark-examples_2.11-$(SPARK_VERSION).jar",
+          "10000"
+        ]

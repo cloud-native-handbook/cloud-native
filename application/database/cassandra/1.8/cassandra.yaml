@@ -1,0 +1,100 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cassandra-headless
+  namespace: cassandra
+spec:
+  clusterIP: None
+  selector:
+    app: cassandra
+  ports:
+  - name: cql
+    port: 9042
+---
+apiVersion: apps/v1beta2
+kind: StatefulSet
+metadata:
+  name: cassandra
+  namespace: cassandra
+spec:
+  serviceName: cassandra-headless
+  replicas: 4
+  selector:
+    matchLabels:
+      app: cassandra
+  template:
+    metadata:
+      name: cassandra
+      labels:
+        app: cassandra
+    spec:
+      terminationGracePeriodSeconds: 1800
+      containers:
+      - name: cassandra
+        image: dockerce/cassandra:v13
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: intra-node
+          containerPort: 7000
+        - name: tls-intra-node
+          containerPort: 7001
+        - name: jmx
+          containerPort: 7199
+        - name: cql
+          containerPort: 9042
+        resources:
+          requests:
+            cpu: "500m"
+            memory: 1Gi
+          limits:
+            cpu: "1000m"
+            memory: 2Gi
+        securityContext:
+          capabilities:
+            add:
+            - IPC_LOCK
+        lifecycle:
+          preStop:
+            exec:
+              command:
+              - /bin/sh
+              - -c
+              - nodetool drain
+        env:
+        - name: MAX_HEAP_SIZE
+          value: 512M
+        - name: HEAP_SIZE
+          value: 100M
+        - name: CASSANDRA_SEEDS
+          value: "cassandra-0.cassandra-headless.cassandra.svc.cluster.local" # first pod
+        - name: CASSANDRA_CLUSTER_NAME
+          value: "cluster1"
+        - name: CASSANDRA_DC
+          value: "dc1"
+        - name: CASSANDRA_RACK
+          value: "rack1"
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        readinessProbe:
+          exec:
+            command:
+            - /bin/bash
+            - -c
+            - /ready-probe.sh
+          initialDelaySeconds: 15
+          timeoutSeconds: 5
+        volumeMounts:
+        - name: cassandra-data
+          mountPath: /cassandra_data
+  volumeClaimTemplates:
+  - metadata:
+      name: cassandra-data
+    spec:
+      storageClassName: rbd
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 200Gi

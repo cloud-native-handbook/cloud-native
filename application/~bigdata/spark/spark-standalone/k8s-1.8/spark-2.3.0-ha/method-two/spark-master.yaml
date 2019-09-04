@@ -1,0 +1,159 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name:  stflset
+  namespace: spark-standalone
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: stflset
+  namespace: spark-standalone
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: stflset
+  namespace: spark-standalone
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spark-cm # 建议改成 spark-cm-template
+  namespace: spark-standalone
+data:
+  spark-master.svc.yaml: |
+    kind: Service
+    apiVersion: v1
+    metadata:
+      name: __name__
+    spec:
+      selector:
+        name: __name__
+      ports:
+      - name: webui
+        port: 8080
+        targetPort: 8080
+      - name: shuffle-server
+        port: 7077
+        targetPort: 7077
+      - name: rest-server
+        port: 6066
+        targetPort: 6066
+---
+
+# 如果使用了 Service 来固定 Master IP，完全可以不用创建 Headless Service
+# 仅仅是不能通过 master-*.master-hs.spark-standalone.svc.cluster.local 来访问 Pod 而已
+kind: Service
+apiVersion: v1
+metadata:
+  name: master-hs
+  namespace: spark-standalone
+spec:
+  clusterIP: None
+  selector:
+    app: spark
+    component: master
+  ports:
+  - name: webui
+    port: 8080
+    targetPort: 8080
+  - name: shuffle-server
+    port: 7077
+    targetPort: 7077
+  - name: rest-server
+    port: 6066
+    targetPort: 6066
+
+---
+
+kind: StatefulSet
+apiVersion: apps/v1beta2
+metadata:
+  name: master
+  namespace: spark-standalone
+spec:
+  replicas: 3
+  serviceName: master-hs
+  selector:
+    matchLabels:
+      app: spark
+      component: master
+  template:
+    metadata:
+      labels:
+        app: spark
+        component: master
+    spec:
+      serviceAccountName: stflset
+      initContainers:
+      # 为每个 StatefulSet Pod 新增不同的 label，以便不同的 Service 可以 select 指定的 Pod
+      # 见：https://github.com/kubernetes/kubernetes/issues/44103#issuecomment-328927845
+      - name: label-set
+        image: lachlanevenson/k8s-kubectl:v1.6.4
+        command:
+        - sh
+        - '-c'
+        - '/usr/local/bin/kubectl label pod ${HOSTNAME} name=${HOSTNAME}' # default namespace: spark-standalone
+      # 每个 Pod 创建一个单独的 Service；本想用命令解决的，但使用命令不能暴露多个端口
+      # 暴露一个端口：kubectl expose pod ${HOSTNAME} --name=${HOSTNAME} --port=7077 --target-port=7077
+      - name: service-create
+        image: lachlanevenson/k8s-kubectl:v1.6.4
+        command:
+        - sh
+        - '-c'
+        - '/bin/sed -e "s|__name__|${HOSTNAME}|g" /spark-master.svc.yaml | /usr/local/bin/kubectl apply -f -' # default namespace: spark-standalone
+        volumeMounts:
+        - name: master-svc-file
+          mountPath: /spark-master.svc.yaml
+          subPath: spark-master.svc.yaml
+      volumes:
+      - name: master-svc-file
+        configMap:
+          name: spark-cm
+          items:
+          - key: spark-master.svc.yaml
+            path: spark-master.svc.yaml
+      containers:
+      # 缩容时自动删除 Service
+      # 但是当需要滚动升级时不建议使用，因为滚动升级会删除 Service 再重建，这将导致 cluster IP 发生改变；如果需要删除 Service 建议手动删除
+      #- name: service-delete
+      #  image: lachlanevenson/k8s-kubectl:v1.6.4
+      #  command: ["/bin/sleep", "3153600000"]
+      #  lifecycle:
+      #    preStop:
+      #      exec:
+      #        command:
+      #        - sh
+      #        - '-c'
+      #        - '/usr/local/bin/kubectl -n spark-standalone delete service ${HOSTNAME}' # default namespace: spark-standalone
+      - name: spark-master
+        image: dockerce/spark:2.3.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: webui
+          containerPort: 8080
+        - name: shuffle-server
+          containerPort: 7077
+        - name: rest-server
+          containerPort: 6066
+        livenessProbe:
+          tcpSocket:
+            port: 7077
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        readinessProbe:
+          tcpSocket:
+            port: 7077
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        env:
+        - name: SPARK_DAEMON_JAVA_OPTS
+          value: "-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=zk-0.zk-hs:2181,zk-1.zk-hs:2181,zk-2.zk-hs:2181 -Dspark.deploy.zookeeper.dir=/spark"
+        args: ["start-master", "--port", "7077", "--webui-port", "8080"]

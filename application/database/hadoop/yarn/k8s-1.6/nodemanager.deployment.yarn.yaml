@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: nodemanager
+  namespace: yarn
+  labels:
+    app: nodemanager
+spec:
+  replicas: 1
+  template:
+    metadata:
+      app: nodemanager
+    containers:
+    - name: nodemanager
+      image: yarn:2.7.2
+      ports:
+      - name: localizer
+        containerPort: 8040
+      - name: webapp
+        containerPort: 8042
+      args: ["yarn", "nodemanager"]

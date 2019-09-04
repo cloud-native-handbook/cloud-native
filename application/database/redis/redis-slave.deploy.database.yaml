@@ -1,0 +1,37 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: redis-slave
+  labels:
+    app: redis-slave
+  namespace: database
+spec:
+  replicas: 2
+  template:
+    metadata:
+      name: redis-slave
+      labels:
+        app: redis-slave
+    spec:
+      containers:
+      - name: slave
+        image: gcr.io/google_containers/redis:v1
+        ports:
+        - containerPort: 6379
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 150m
+            memory: 150Mi
+        volumeMounts:
+        - name: redis-slave-config
+          mountPath: /redis-slave
+      volumes:
+      - name: redis-slave-config
+        configMap:
+          name: redis-config
+          items:
+          - key: redis-slave.conf
+            path: ./redis.conf

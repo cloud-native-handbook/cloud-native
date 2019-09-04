@@ -1,0 +1,39 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: datanode
+  namespace: hadoop
+  labels:
+    app: hdfs-datanode
+spec:
+  serviceName: datanode
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: datanode
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: datanode
+        image: hdfs:2.7.3
+        ports:
+        - name: http
+          containerPort: 50075
+        - name: data-transfer
+          containerPort: 50010
+        - name: ipc
+          containerPort: 50020
+        args: ["hdfs", "datanode", "-fs", "hdfs://namenode-0.namenode.hadoop.svc:9000", "-Ddfs.datanode.data.dir=/data/datanode", "-Ddfs.permissions.enabled=false"]
+        volumeMounts:
+        - name: hdfs
+          mountPath: /data/datanode
+  volumeClaimTemplates:
+  - metadata:
+      name: hdfs
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: rbd
+      resources:
+        requests:
+          storage: 500Gi

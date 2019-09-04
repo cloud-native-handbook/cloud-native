@@ -1,0 +1,40 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: namenode
+  namespace: hadoop
+  labels:
+    app: hdfs-namenode
+spec:
+  serviceName: namenode
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: namenode
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: namenode
+        image: hdfs:2.7.3
+        ports:
+        - name: http
+          containerPort: 50070
+        - name: ipc
+          containerPort: 9000
+        env:
+        - name: DFS_NAMENODE_NAME_DIR
+          value: /data/namenode
+        args: ["hdfs", "namenode", "-Dfs.defaultFS=hdfs://0.0.0.0:9000", "-Ddfs.namenode.name.dir=/data/namenode", "-Ddfs.replication=3", "-Ddfs.namenode.datanode.registration.ip-hostname-check=false", "-Ddfs.permissions.enabled=false"]
+        volumeMounts:
+        - name: hdfs
+          mountPath: /data/namenode
+  volumeClaimTemplates:
+  - metadata:
+      name: hdfs
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: rbd
+      resources:
+        requests:
+          storage: 1Gi

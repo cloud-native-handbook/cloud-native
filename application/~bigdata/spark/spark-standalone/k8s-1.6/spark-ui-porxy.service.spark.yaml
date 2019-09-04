@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-ui-proxy
+  namespace: spark
+spec:
+  type: NodePort
+  selector:
+    component: spark-ui-proxy
+  ports:
+  - name: proxyui
+    port: 80
+    targetPort: 80

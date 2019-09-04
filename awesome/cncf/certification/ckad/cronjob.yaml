@@ -1,0 +1,20 @@
+# cat /opt/KDPD00301/periodic.yaml
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: hello
+spec:
+  activeDeadlineSeconds: 10
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: hello
+            image: busybox
+            args:
+            - /bin/sh
+            - -c
+            - date
+          restartPolicy: OnFailure

@@ -1,0 +1,14 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: zeppelin-ingress
+  namespace: spark
+spec:
+  rules:
+  - host: zeppelin.spark.svc.cluster.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: zeppelin
+          servicePort: 8080

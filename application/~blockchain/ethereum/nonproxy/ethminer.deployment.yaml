@@ -1,0 +1,68 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: ethminer
+  namespace: ethereum
+spec:
+  replicas: 6
+  selector:
+    matchLabels:
+      app: ethminer
+  template:
+    metadata:
+      labels:
+        app: ethminer
+    spec:
+      nodeSelector:
+        node-type: gpu
+        nvidia.com/gpu-name: "p106-100"
+      containers:
+      - name: ethminer
+        image: dockerce/cuda-ethminer:9.1-0.12.0
+        imagePullPolicy: IfNotPresent
+        command: ["ethminer"]
+        args:
+        - -U
+        - -S
+        - "eu2.ethermine.org:14444"
+        - -FS
+        - "eu2.ethermine.org:4444"
+        - -FS
+        - "eu1.ethermine.org:14444"
+        - -FS
+        - "eu1.ethermine.org:4444"
+        - -O
+        - "79e478b8825fc50d9fde647ccc97483b5174f66f.${HOST_IP}"
+        - --farm-recheck
+        - "200"
+        env:
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        resources:
+          requests:
+            cpu: 50m
+            memory: 128Mi
+          limits:
+            cpu: 100m
+            memory: 192Mi
+            nvidia.com/gpu: 1
+        readinessProbe:
+          exec:
+            command:
+            - pgrep
+            - ethminer
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          exec:
+            command:
+            - pgrep
+            - ethminer
+          initialDelaySeconds: 5
+          periodSeconds: 5

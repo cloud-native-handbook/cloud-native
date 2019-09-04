@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: master
+  namespace: spark
+spec:
+  selector:
+    app: spark
+    component: master
+  ports:
+  - name: ui
+    port: 8080
+    targetPort: 8080
+  - name: shuffleserver
+    port: 7077
+    targetPort: 7077
+  - name: restserver
+    port: 6066
+    targetPort: 6066

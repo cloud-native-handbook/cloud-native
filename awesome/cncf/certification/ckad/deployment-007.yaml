@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: log
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log
+  template:
+    metadata:
+      labels:
+        app: log
+    spec:
+      containers:
+      - name: logger-zen
+        image: lfccncf/busybox:1
+        command: ["/bin/sh", "-c", "while true; do echo i luv cncf >> /tmp/log/input.log; sleep 10; done"]
+        volumeMounts:
+        - name: tmplog
+          mountPath: /tmp/log
+      - name: adapter-123
+        image: lfccncf/fluentd:v0.12
+        args:
+        - /bin/sh
+        - -c
+        - >
+          i=0;
+          while true; do
+            if [[ -f "/tmp/log/input.log" ]]; then
+              tailLog=$(tail -n 1 "/tmp/log/input.log")
+              echo "{\"$i\": \"$tailLog\"}" >> /tmp/log/output.log;
+              i=$((i+1));
+            fi
+            sleep 10;
+          done
+        volumeMounts:
+        - name: tmplog
+          mountPath: /tmp/log
+      volumes:
+      - name: tmplog
+        emptyDir: {}
+
+--------------------
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentdconfig
+data:
+  fluentd.conf: |
+    <source>
+      @type tail
+      format none
+      path /tmp/log/input.log
+      pos_file /tmp/log/input.pos
+      tag cncf
+      rotate_wait 5
+      read_from_head true
+      refresh_interval 10
+    </source>
+
+    <match cncf>
+      @type file
+      path /tmp/log/output
+      format json
+      buffer_type memory
+      # compress gzip
+      # symlink_path /path/to/symlink
+      append false
+    </match>
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: log
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: log
+  template:
+    metadata:
+      labels:
+        app: log
+    spec:
+      containers:
+      - name: logger-zen
+        image: lfccncf/busybox:1
+        command: ["/bin/sh", "-c", "while true; do echo i luv cncf >> /tmp/log/input.log; sleep 10; done"]
+        volumeMounts:
+        - name: tmplog
+          mountPath: /tmp/log
+      - name: adapter-123
+        image: lfccncf/fluentd:v0.12
+        command: ["/bin/sh", "-c", "fluentd -c /fluentd/etc/fluent.conf"]
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+        - name: tmplog
+          mountPath: /tmp/log
+        - name: fluentdconfig
+          mountPath: /fluentd/etc
+      volumes:
+      - name: tmplog
+        emptyDir: {}
+      - name: fluentdconfig
+        configMap:
+          name: fluentdconfig

@@ -1,0 +1,51 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: spark-master
+  namespace: spark
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: spark
+      component: master
+  template:
+    metadata:
+      labels:
+        app: spark
+        component: master
+    spec:
+      containers:
+      - name: spark-master
+        image: dockerce/spark:2.3.0
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 1000m
+            memory: 2Gi
+          limits:
+            cpu: 1000m
+            memory: 2Gi
+        ports:
+        - name: webui
+          containerPort: 8080
+        - name: shuffle-server
+          containerPort: 7077
+        - name: rest-server
+          containerPort: 6066
+        livenessProbe:
+          tcpSocket:
+            port: 7077
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        readinessProbe:
+          tcpSocket:
+            port: 7077
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        args: ["start-master", "--port", "7077", "--webui-port", "8080"]

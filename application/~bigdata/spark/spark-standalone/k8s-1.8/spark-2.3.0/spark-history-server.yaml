@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: history-server
+  namespace: spark
+spec:
+  type: ClusterIP
+  selector:
+    app: spark
+    component: history-server
+  ports:
+  - name: webui
+    port: 18080
+    targetPort: 18080
+
+---
+
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: spark-history
+  namespace: spark
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: spark
+      component: history-server
+  template:
+    metadata:
+      labels:
+        app: spark
+        component: history-server
+    spec:
+      initContainers:
+      - name: mkdir
+        image: dockerce/hdfs:2.7.5
+        command: ["hdfs", "dfs", "-mkdir", "-p", "hdfs://namenode.hdfs.svc.cluster.local:9000/spark/history"]
+      - name: chown
+        image: dockerce/hdfs:2.7.5
+        command: ["hdfs", "dfs", "-chown", "-R", "spark:spark", "hdfs://namenode.hdfs.svc.cluster.local:9000/spark"]
+      - name: chmod
+        image: dockerce/hdfs:2.7.5
+        command: ["hdfs", "dfs", "-chmod", "1777", "hdfs://namenode.hdfs.svc.cluster.local:9000/spark/history"]
+      containers:
+      - name: history-server
+        image: dockerce/spark:2.3.0
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: SPARK_PUBLIC_DNS
+          value: "history-server.spark.svc.cluster.local"
+        - name: SPARK_HISTORY_OPTS
+          value: "-Dspark.history.ui.port=18080 -Dspark.history.fs.logDirectory=hdfs://namenode.hdfs.svc.cluster.local:9000/spark/history"
+        ports:
+        - name: webui
+          containerPort: 18080
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 18080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 18080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        args: ["start-history"] # or: bin/spark-class -Dx=y org.apache.spark.deploy.history.HistoryServer

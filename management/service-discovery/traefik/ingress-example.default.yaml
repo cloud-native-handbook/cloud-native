@@ -1,0 +1,52 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: traefik-tomcat
+  namespace: default
+  labels:
+    app: traefik-tomcat
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: traefik-tomcat
+      labels:
+        app: traefik-tomcat
+    spec:
+      containers:
+      - name: traefik-tomcat
+        image: tomcat:alpine
+        ports:
+        - name: webui
+          containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik-tomcat
+  namespace: default
+spec:
+  type: ClusterIP
+  selector:
+    app: traefik-tomcat
+  ports:
+  - name: webui
+    port: 8080
+    targetPort: 8080
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-example
+  namespace: default
+  annotations:
+    traefik.frontend.rule.type: PathPrefixStrip
+spec:
+  rules:
+  - host: tomcat.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: traefik-tomcat
+          servicePort: webui

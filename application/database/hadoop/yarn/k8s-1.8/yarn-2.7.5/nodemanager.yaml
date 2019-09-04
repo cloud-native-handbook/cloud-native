@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodemanager
+  namespace: yarn
+spec:
+  clusterIP: None
+  selector:
+    app: yarn
+    component: nodemanager
+  ports:
+  - name: localizer
+    port: 8040
+    targetPort: 8040
+  - name: webui
+    port: 8042
+    targetPort: 8042
+
+---
+
+apiVersion: apps/v1beta2
+kind: StatefulSet
+metadata:
+  name: nm
+  namespace: yarn
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: yarn
+      component: nodemanager
+  serviceName: nodemanager
+  template:
+    metadata:
+      labels:
+        app: yarn
+        component: nodemanager
+    spec:
+      initContainers:
+      - name: check-resourcemanager
+        image: busybox:1
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/sh", "-c", "nslookup resourcemanager"] # resourcemanager.yarn.svc.cluster.local
+      containers:
+      - name: nodemanager
+        image: dockerce/hdfs:2.7.5
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: localizer
+          containerPort: 8040
+        - name: webui
+          containerPort: 8042
+        resources:
+          requests:
+            cpu: "1"
+            memory: 2Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        env:
+        - name: YARN_NODEMANAGER_RESOURCE_MEMORY-MB # yarn.nodemanager.resource.memory-mb
+          valueFrom:
+            resourceFieldRef:
+              resource: limits.memory
+        - name: YARN_NODEMANAGER_RESOURCE_CPU-VCORES # yarn.nodemanager.resource.cpu-vcores 
+          valueFrom:
+            resourceFieldRef:
+              resource: limits.cpu
+        - name: YARN_NODEMANAGER_OPTS
+          value: "-Dnodemanager.resource.memory-mb=1024 -Dnodemanager.resource.cpu-vcores=4 -Dnodemanager.resource.io-spindles=2.0"
+        livenessProbe:
+          tcpSocket:
+            port: 8040
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        readinessProbe:
+          tcpSocket:
+            port: 8040
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        args:
+        - "yarn"
+        - "nodemanager"
+        - "-Dyarn.resourcemanager.hostname=resourcemanager" # resourcemanager.yarn.svc.cluster.local
+        - "-Dyarn.nodemanager.vmem-check-enabled=false"
+        - "-Dyarn.nodemanager.aux-services=mapreduce_shuffle"
+        - "-Dyarn.nodemanager.disk-health-checker.max-disk-utilization-per-disk-percentage=99"
+        #- "-Dyarn.nodemanager.local-dirs=/var/lib/yarn/cache/nm-local-dir"
+        #- "-Dyarn.nodemanager.log-dirs=/var/log/yarn/containers"

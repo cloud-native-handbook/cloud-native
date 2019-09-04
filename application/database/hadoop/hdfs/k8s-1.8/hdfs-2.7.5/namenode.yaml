@@ -1,0 +1,83 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: namenode
+  namespace: hdfs
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: hdfs
+    component: namenode
+  ports:
+  - name: ipc
+    port: 9000
+    targetPort: 9000
+  - name: webui
+    port: 50070
+    targetPort: 50070
+
+---
+
+apiVersion: apps/v1beta2
+kind: StatefulSet
+metadata:
+  name: namenode
+  namespace: hdfs
+spec:
+  replicas: 1
+  serviceName: namenode
+  selector:
+    matchLabels:
+      app: hdfs
+      component: namenode
+  template:
+    metadata:
+      labels:
+        app: hdfs
+        component: namenode
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: hdfs-nn
+        image: dockerce/hdfs:2.7.5
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: ipc
+          containerPort: 9000
+        - name: webui
+          containerPort: 50070
+        env:
+        - name: DFS_NAMENODE_NAME_DIR
+          value: /data/namenode
+        args:
+        - hdfs
+        - namenode
+        - -Dfs.defaultFS=hdfs://0.0.0.0:9000
+        - -Ddfs.namenode.name.dir=/data/namenode
+        - -Ddfs.replication=3
+        - -Ddfs.namenode.datanode.registration.ip-hostname-check=false
+        - -Ddfs.permissions.enabled=false
+        livenessProbe:
+          tcpSocket:
+            port: 9000
+          initialDelaySeconds: 15
+          periodSeconds: 5
+        readinessProbe:
+          tcpSocket:
+            port: 9000
+          initialDelaySeconds: 15
+          periodSeconds: 5
+        volumeMounts:
+        - name: hdfs-nn-data
+          mountPath: /data/namenode
+  volumeClaimTemplates:
+  - metadata:
+      name: hdfs-nn-data
+    spec:
+      storageClassName: rbd
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi

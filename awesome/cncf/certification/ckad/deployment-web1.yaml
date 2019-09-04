@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+ name: web1
+ namespace: kdpd00202
+spec:
+ strategy:
+ type: RollingUpdate
+ rollingUpdate:
+ maxSurge: 25%
+ maxUnavailable: 25%
+ selector:
+ matchLabels:
+ app: nginx
+ replicas: 3
+ template:
+ metadata:
+ labels:
+ app: nginx
+ spec:
+ containers:
+ - name: nginx
+ image: lfccncf/nginx:1.12.2
+
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: web1
+  namespace: kdpd00202
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: lfccncf/nginx:1.12.2
+
+# kubectl create namespace kdpd00202
+
+cat <<EOF | kubectl apply -f -
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web1
+  namespace: kdpd00202
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 4
+      maxUnavailable: 2
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: lfccncf/nginx:1.13
+EOF
+
+# kubectl -n kdpd00202 set image deployment/web1 nginx=lfccncf/nginx:1.13
+

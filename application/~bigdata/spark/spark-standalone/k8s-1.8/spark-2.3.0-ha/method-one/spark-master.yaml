@@ -1,0 +1,93 @@
+---
+# 如果使用了 Service 来固定 Master IP，完全可以不用创建 Headless Service
+# 仅仅是不能通过 master-*.master-hs.spark-standalone.svc.cluster.local 来访问 Pod 而已
+kind: Service
+apiVersion: v1
+metadata:
+  name: master-hs # cannot be called "spark-master"
+  namespace: spark-standalone
+spec:
+  clusterIP: None
+  selector:
+    app: spark
+    component: master
+  ports:
+  - name: webui
+    port: 8080
+    targetPort: 8080
+  - name: shuffle-server
+    port: 7077
+    targetPort: 7077
+  - name: rest-server
+    port: 6066
+    targetPort: 6066
+
+---
+
+# 给 spark-ui-proxy 用
+kind: Service
+apiVersion: v1
+metadata:
+  name: master # cannot be called "spark-master"
+  namespace: spark-standalone
+spec:
+  clusterIP: None
+  selector:
+    app: spark
+    component: master
+  ports:
+  - name: webui
+    port: 8080
+    targetPort: 8080
+  - name: shuffle-server
+    port: 7077
+    targetPort: 7077
+  - name: rest-server
+    port: 6066
+    targetPort: 6066
+
+---
+
+kind: StatefulSet
+apiVersion: apps/v1beta2
+metadata:
+  name: master
+  namespace: spark-standalone
+spec:
+  replicas: 3
+  serviceName: master-hs
+  selector:
+    matchLabels:
+      app: spark
+      component: master
+  template:
+    metadata:
+      labels:
+        app: spark
+        component: master
+    spec:
+      containers:
+      - name: spark-master
+        image: dockerce/spark:2.3.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: webui
+          containerPort: 8080
+        - name: shuffle-server
+          containerPort: 7077
+        - name: rest-server
+          containerPort: 6066
+        livenessProbe:
+          tcpSocket:
+            port: 7077
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        readinessProbe:
+          tcpSocket:
+            port: 7077
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        env:
+        - name: SPARK_DAEMON_JAVA_OPTS
+          value: "-Dspark.deploy.recoveryMode=ZOOKEEPER -Dspark.deploy.zookeeper.url=zk-0.zk-hs:2181,zk-1.zk-hs:2181,zk-2.zk-hs:2181 -Dspark.deploy.zookeeper.dir=/spark"
+        args: ["start-master", "--port", "7077", "--webui-port", "8080"]

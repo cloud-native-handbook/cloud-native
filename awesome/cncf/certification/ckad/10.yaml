@@ -1,0 +1,19 @@
+# kubectl create sa mysa
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name:  mysa
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: myapp
+  labels:
+    name: myapp
+spec:
+  serviceAccount: sa
+  containers:
+  - name: myapp
+    image: nginx:alpine
+    ports:
+      - containerPort: 80

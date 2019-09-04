@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: wp-ingress
+  namespace: web
+  annotations:
+    traefik.frontend.rule.type: PathPrefixStrip
+spec:
+  rules: 
+  - host: wordpress.web.svc.cluster.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: wordpress
+          servicePort: 80

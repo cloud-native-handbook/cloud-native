@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: gafana-ingress
+  namespace: monitoring
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+  - host: monitor.cloud.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: grafana
+          servicePort: 80

@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: yinrenqiang
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: job-socket2kafka-16198
+  namespace: yinrenqiang
+  labels:
+    app: socket2kafka-16198
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: job-socket2kafka
+      labels:
+        app: socket2kafka-16198
+    spec:
+      restartPolicy: Always
+      nodeSelector:
+        kubernetes.io/hostname: centos-compute-104
+      containers:
+      - name: socket2kafka-16198
+        image: job/socket2kafka:1030-1
+        ports:
+        - containerPort: 16198
+          protocol: UDP
+          hostPort: 16198
+        command: ["/socket2kafka.py", "16198", "kafka-discovery.kafka-cluster.svc.cluster.local:9092", "beijing-boloomo"]

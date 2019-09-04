@@ -1,0 +1,13 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rbd
+provisioner: kubernetes.io/rbd
+parameters:
+  monitors: 192.168.10.200:6789,192.168.10.201:6789,192.168.10.202:6789
+  adminId: admin
+  adminSecretName: rbd-secret-admin # 其他命名空间需要有一个同名的 Secret
+  adminSecretNamespace: kube-system # 其他命名空间可以共享 kube-system 命名空间的资源
+  pool: kube
+  userId: admin
+  userSecretName: rbd-secret-admin

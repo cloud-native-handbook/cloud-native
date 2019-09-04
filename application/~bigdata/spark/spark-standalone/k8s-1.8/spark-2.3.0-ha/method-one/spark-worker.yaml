@@ -1,0 +1,69 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: spark-worker
+  namespace: spark-standalone
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: spark
+      component: worker
+  template:
+    metadata:
+      labels:
+        app: spark
+        component: worker
+    spec:
+      # 检查 Master 是否已启动
+      initContainers:
+      - name: check-master-health
+        image: busybox:1
+        command: ["/bin/sh", "-c", "nslookup master-hs"]
+      containers:
+      - name: spark-worker
+        image: dockerce/spark:2.3.0
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 1000m
+            memory: 4Gi
+          limits:
+            cpu: 1000m
+            memory: 4Gi
+        env:
+        - name: SPARK_WORKER_PORT
+          value: "7078"
+        - name: SPARK_WORKER_CORES
+          valueFrom:  # Integer, examples: '1', '3'
+            resourceFieldRef:
+              resource: requests.cpu
+        - name: SPARK_WORKER_MEMORY
+          valueFrom:  # Integer, examples: '1024m', '1g'
+            resourceFieldRef:
+              resource: requests.memory
+        ports:
+        - name: webui
+          containerPort: 8081
+        - name: worker-port
+          containerPort: 7078
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8081
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8081
+          initialDelaySeconds: 10
+          periodSeconds: 5
+        # 非真正的高可用，若 Master Pod 都重启过将导致失败
+        # 这里不能使用 Type=ClusterIP Service，可能会因为无法轮询到 Leader Master 而导致 Worker 启动不了，不信你可以试试
+        args: ["start-worker", "spark://master-0.master-hs:7077,master-1.master-hs:7077,master-2.master-hs:7077"]

@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: zeppelin-notebook
+  namespace: spark
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: rbd
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: zeppelin
+  namespace: spark
+  labels:
+    app: zeppelin
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: zeppelin
+    spec:
+      containers:
+      - name: zeppelin
+        image: apache/zeppelin:0.7.2
+        ports:
+        - name: webui
+          containerPort: 8080
+        env:
+        - name: ZEPPELIN_LOG_DIR
+          value: "/logs"
+        - name: ZEPPELIN_NOTEBOOK_DIR
+          value: "/zeppelin/notebook"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 5
+        volumeMounts:
+        - name: notebook
+          mountPath: /zeppelin/notebook
+      volumes:
+      - name: notebook
+        persistentVolumeClaim: 
+          claimName: zeppelin-notebook

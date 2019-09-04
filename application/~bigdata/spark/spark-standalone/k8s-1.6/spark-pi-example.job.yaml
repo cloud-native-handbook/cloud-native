@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sparkpi-example
+  namespace: spark
+spec:
+  template:
+    metadata:
+      name: spark-pi
+    spec:
+      containers:
+      - name: spark-pi
+        image: spark:2.0.2
+        resources:
+          requests:
+            cpu: 4000m
+            memory: 16Gi
+          limits:
+            cpu: 4000m
+            memory: 16Gi
+        command: [
+          "spark-submit",
+          "--conf", "spark.driver.cores=4",
+          "--conf", "spark.driver.memory=16g",
+          "--conf", "spark.eventLog.enabled=true",
+          "--conf", "spark.eventLog.dir=hdfs://namenode.hadoop.svc.cluster.local:9000/spark/history",
+          "--conf", "spark.eventLog.compress=true",
+          "--master", "spark://spark-master.spark.svc.cluster.local:7077",
+          "--class", "org.apache.spark.examples.SparkPi",
+          "--supervise",
+          "--executor-memory=4G",
+          "--total-executor-cores=12",
+          "--num-executors=10",
+          "examples/jars/spark-examples_2.11-2.0.2.jar",
+          "1000"
+        ]
+      restartPolicy: Never

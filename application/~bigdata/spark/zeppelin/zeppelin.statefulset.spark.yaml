@@ -1,0 +1,39 @@
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: zeppelin
+  namespace: spark
+  labels:
+    app: zeppelin
+spec:
+  replicas: 1
+  serviceName: zeppelin
+  template:
+    metadata:
+      labels:
+        app: zeppelin
+    spec:
+      containers:
+      - name: zeppelin
+        image: apache/zeppelin:0.7.2
+        ports:
+        - name: webui
+          containerPort: 8080
+        env:
+        - name: ZEPPELIN_LOG_DIR
+          value: "/logs"
+        - name: ZEPPELIN_NOTEBOOK_DIR
+          value: "/zeppelin/notebook"
+        volumeMounts:
+        - name: notebook
+          mountPath: /zeppelin/notebook
+  volumeClaimTemplates:
+  - metadata:
+      name: notebook
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      storageClassName: rbd
+      resources:
+        requests:
+          storage: 2Gi

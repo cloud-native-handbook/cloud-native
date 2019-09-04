@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: qiujiayu
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job-compress-qiu
+  namespace: qiujiayu
+spec:
+  template:
+    metadata:
+      name: job-compress-qiu
+    spec:
+      containers:
+      - name: job-compress-qiu
+        image: job/spark-compress:0930-1
+        resources:
+          requests:
+            cpu: 4000m
+            memory: 16Gi
+          limits:
+            cpu: 4000m
+            memory: 16Gi
+        command: [
+          "spark-submit",
+          "--conf", "spark.driver.cores=4",
+          "--conf", "spark.driver.memory=16g",
+          "--conf", "spark.eventLog.enabled=true",
+          "--conf", "spark.eventLog.dir=hdfs://namenode-0.namenode.hadoop.svc.cluster.local:9000/spark/history",
+          "--conf", "spark.eventLog.compress=true",
+          "--conf", "spark.executorEnv.PYTHONHASHSEED=0",
+          "--master", "spark://spark-master.spark.svc.cluster.local:7077",
+          "--supervise",
+          "--executor-memory=16G",
+          "--total-executor-cores=12",
+          "--num-executors=10",
+          "/opt/qiu_src/dp_main_spark.py",
+          "0.5",
+          "cx",
+          "hdfs://namenode-0.namenode.hadoop.svc.cluster.local:9000/usr/qiu/ais_bm/201609",
+          "hdfs://namenode-0.namenode.hadoop.svc.cluster.local:9000/usr/qiu/ais_bm/201609_cx_500m"
+        ]
+      initContainers:
+      - name: remove-save-dir
+        image: hdfs:2.7.3
+        command: ["hdfs", "dfs", "-rm", "-r", "-f", "hdfs://namenode-0.namenode.hadoop.svc.cluster.local:9000/usr/qiu/ais_bm/201609_cx_500m"]
+      restartPolicy: Never

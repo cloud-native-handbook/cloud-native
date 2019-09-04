@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rbd-secret-admin
+  namespace: kube-system # 其他命名空间可以共享 kube-system 命名空间的资源
+type: kubernetes.io/rbd # This is required for Ceph RBD to work with dynamic provisioning.
+data:
+  key: QVFBUGo3ZFpCMk5jTlJBQW5ZNVdNM1NLQzhldVA5d3JJajBvWFE9PQ==
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: rbd
+provisioner: kubernetes.io/rbd
+parameters:
+  monitors: 192.168.10.200:6789,192.168.10.201:6789,192.168.10.202:6789
+  adminId: admin # 指定 Ceph client 的 ID，需要具有能在配置的Ceph RBD Pool中创建镜像的权限
+  adminSecretName: rbd-secret-admin # adminId的Secret Name,该Secret的type必须是”kubernetes.io/rbd”
+  adminSecretNamespace: kube-system #  adminSecret 的 namespace，默认为 ”default”
+  pool: kube
+  userId: admin # Ceph client Id，用来映射RBD镜像。
+  # userId 在映射 RBD 镜像时所需要的 Secret 的名称。该Secret要求必须出现在和PVC相同的namespace内，并且type必须是”kubernetes.io/rbd”
+  userSecretName: rbd-secret-admin # 创建 StorageClass 时不需要提前创建好，但其他命名空间在使用 StorageClass 时需要创建一个与此同名的 Secret

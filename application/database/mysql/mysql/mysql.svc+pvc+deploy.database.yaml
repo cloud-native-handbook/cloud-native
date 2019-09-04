@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  labels:
+    app: mysql
+  namespace: database
+spec:
+  clusterIP: None
+  ports:
+  - port: 3306
+    targetPort: 3306
+  selector:
+    app: mysql
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: database
+spec:
+  accessModes: ["ReadWriteOnce"]
+  storageClassName: rbd
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: mysql
+  labels:
+    app: mysql
+  namespace: database
+spec:
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - image: mysql:5.6
+        name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: root.password
+        - name: MYSQL_ROOT_HOST
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: root.host
+        ports:
+        - name: mysql
+          containerPort: 3306
+        volumeMounts:
+        - name: mysql
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql
+        persistentVolumeClaim:
+          claimName: mysql-pvc

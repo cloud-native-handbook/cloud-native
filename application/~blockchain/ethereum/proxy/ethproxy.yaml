@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ethproxy
+  namespace: ethereum
+spec:
+  type: ClusterIP
+  selector:
+    app: ethproxy
+  ports:
+  - name: proxy
+    port: 8080
+    targetPort: proxy
+
+---
+
+apiVersion: apps/v1beta2
+kind: DaemonSet
+metadata:
+  name: ethproxy
+  namespace: ethereum
+spec:
+  selector:
+    matchLabels:
+      app: ethproxy
+  template:
+    metadata:
+      labels:
+        app: ethproxy
+    spec:
+      nodeSelector:
+        app-type: ethereum-proxy
+      containers:
+      - name: ethproxy
+        image: dockerce/eth-proxy:0.0.5
+        ports:
+        - name: proxy
+          containerPort: 8080
+          hostPort: 8080
+        resources:
+          requests:
+            cpu: 200m
+            memory: 128Mi
+          limits:
+            cpu: 256m
+            memory: 256Mi
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: config-volume
+          mountPath: /ethproxy/eth-proxy.conf
+          subPath: eth-proxy.conf
+      volumes:
+      - name: config-volume
+        configMap:
+          name: ethproxy-config

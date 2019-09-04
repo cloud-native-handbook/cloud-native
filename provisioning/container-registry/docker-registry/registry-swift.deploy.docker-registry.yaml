@@ -1,0 +1,65 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: docker-registry-swfit
+  namespace: docker-registry
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: registry
+      labels:
+        app: registry
+    spec:
+      containers:
+      - name: registry
+        image: registry:2.6
+        imagePullPolicy: IfNotPresent
+        # command: "htpasswd -Bbn root root123456 > /auth/htpasswd"
+        resources:
+          requests:
+            cpu: 150m
+            memory: 150Mi
+          limits:
+            cpu: 200m
+            memory: 200Mi
+        ports:
+        - name: registry
+          containerPort: 5000
+          protocol: TCP
+        env:
+        - name: REGISTRY_HTTP_ADDR
+          value: "0.0.0.0:5000"
+        - name: REGISTRY_STORAGE
+          value: "swift"
+        - name: REGISTRY_STORAGE_SWIFT_AUTHURL
+          valueFrom:
+            secretKeyRef:
+              name: registry-swift
+              key: storage.swift.authurl
+        - name: REGISTRY_STORAGE_SWIFT_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: registry-swift
+              key: storage.swift.username
+        - name: REGISTRY_STORAGE_SWIFT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: registry-swift
+              key: storage.swift.password
+        - name: REGISTRY_STORAGE_SWIFT_CONTAINER
+          valueFrom:
+            secretKeyRef:
+              name: registry-swift
+              key: storage.swift.container
+        - name: REGISTRY_AUTH_HTPASSWD_REALM
+          value: basic_realm
+        - name: REGISTRY_AUTH_HTPASSWD_PATH
+          value: /auth/htpasswd
+        volumeMounts:
+        - name: auth-dir
+          mountPath: /auth
+      volumes:
+      - name: auth-dir
+        secret:
+          secretName: registry-auth-secret

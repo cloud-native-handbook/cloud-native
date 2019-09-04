@@ -1,0 +1,27 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: resourcemanager
+  namespace: yarn
+  labels:
+    app: resourcemanager
+spec:
+  replicas: 1
+  template:
+    metadata:
+      app: resourcemanager
+    containers:
+    - name: resourcemanager
+      image: yarn:2.7.2
+      ports:
+      - name: scheduler
+        containerPort: 8030
+      - name: resource-tracker
+        containerPort: 8031
+      - name: resourcemanager
+        containerPort: 8032
+      - name: admin
+        containerPort: 8033
+      - name: webapp
+        containerPort: 8088
+      args: ["yarn", "resoucemanager"]

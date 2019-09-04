@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ethproxy-config
+  namespace: ethereum
+data:
+  eth-proxy.conf: |
+    # Select Ethereum ETH or Expanse EXP
+    COIN = "ETH"
+
+    # Host and port for your workers
+    HOST = "0.0.0.0"
+    PORT = 8080
+
+    # Coin address where money goes
+    WALLET = "0x79e478b8825fc50d9fde647ccc97483b5174f66f"
+
+    # It's useful for individually monitoring and statistic
+    ENABLE_WORKER_ID = True
+
+    # On DwarfPool you have option to monitor your workers via email.
+    # If WORKER_ID is enabled, you can monitor every worker/rig separately.
+    MONITORING = True
+    MONITORING_EMAIL = "yrqiang@163.com"
+
+    # Main pool
+    POOL_HOST = "huabei-pool.ethfans.org"
+    POOL_PORT = 3333
+
+    # Failover pool
+    POOL_FAILOVER_ENABLE = True
+
+    POOL_HOST_FAILOVER1 = "huabei-pool.ethfans.org"
+    POOL_PORT_FAILOVER1 = 13333
+
+    POOL_HOST_FAILOVER2 = "guangdong-pool.ethfans.org"
+    POOL_PORT_FAILOVER2 = 3333
+
+    POOL_HOST_FAILOVER3 = "guangdong-pool.ethfans.org"
+    POOL_PORT_FAILOVER3 = 13333
+
+    # Logging
+    LOG_TO_FILE = True
+
+    # Enable debug
+    DEBUG = False

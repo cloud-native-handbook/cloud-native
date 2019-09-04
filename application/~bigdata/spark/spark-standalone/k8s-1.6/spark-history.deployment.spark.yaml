@@ -1,0 +1,41 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: spark-history
+  namespace: spark
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark-history
+  template:
+    metadata:
+      name: spark-history
+      labels:
+        app: spark-history
+    spec:
+      containers:
+      - name: spark-history
+        image: spark-py2:2.7-2.0.2-numpy-pandas-scipy
+        ports:
+        - name: webui
+          containerPort: 18080
+          protocol: TCP
+        env:
+        - name: SPARK_HISTORY_OPTS
+          value: "-Dspark.history.ui.port=18080 -Dspark.history.fs.logDirectory=hdfs://namenode.hadoop.svc.cluster.local:9000/spark/history"
+          # value: "-Dspark.history.ui.port=18080 -Dspark.history.fs.logDirectory=hdfs://namenode-0.namenode.hadoop.svc.cluster.local:9000/spark/history"
+        args: ["start-history"]
+      initContainers:
+      - name: mkdir
+        image: hdfs:2.7.3
+        command: ["hdfs", "dfs", "-mkdir", "-p", "hdfs://namenode.hadoop.svc.cluster.local:9000/spark/history"]
+        # command: ["hdfs", "dfs", "-mkdir", "-p", "hdfs://namenode-0.namenode.hadoop.svc.cluster.local:9000/spark/history"]
+      - name: chown
+        image: hdfs:2.7.3
+        command: ["hdfs", "dfs", "-chown", "-R", "spark:spark", "hdfs://namenode.hadoop.svc.cluster.local:9000/spark"]
+        # command: ["hdfs", "dfs", "-chown", "-R", "spark:spark", "hdfs://namenode-0.namenode.hadoop.svc.cluster.local:9000/spark"]
+      - name: chmod
+        image: hdfs:2.7.3
+        command: ["hdfs", "dfs", "-chmod", "1777", "hdfs://namenode.hadoop.svc.cluster.local:9000/spark/history"]
+        # command: ["hdfs", "dfs", "-chmod", "1777", "hdfs://namenode-0.namenode.hadoop.svc.cluster.local:9000/spark/history"]

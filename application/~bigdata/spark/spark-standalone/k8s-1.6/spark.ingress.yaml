@@ -1,0 +1,23 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: spark-ingress
+  namespace: spark
+  annotations:
+    traefik.frontend.rule.type: PathPrefixStrip
+spec:
+  rules:
+  - host: ui.spark.cloud.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: spark-master
+          servicePort: 8080
+  - host: history.spark.cloud.local
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: spark-history
+          servicePort: 18080

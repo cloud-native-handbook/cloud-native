@@ -1,0 +1,25 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: spark-master
+  namespace: spark
+  labels:
+    app: spark-master
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: spark-master
+    spec:
+      containers:
+      - name: spark-master
+        image: spark-py2:2.7-2.0.2-numpy-pandas-scipy
+        ports:
+        - name: webui
+          containerPort: 8080
+        - name: shuffle-server
+          containerPort: 7077
+        - name: rest-server
+          containerPort: 6066
+        args: ["start-master"]

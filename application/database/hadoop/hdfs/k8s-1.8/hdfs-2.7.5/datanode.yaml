@@ -1,0 +1,74 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: datanode
+  namespace: hdfs
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    app: hdfs
+    component: datanode
+  ports:
+  - name: webui
+    port: 50075
+    targetPort: 50075
+  - name: data-transfer
+    port: 50010
+    targetPort: 50010
+  - name: ipc
+    port: 50020
+    targetPort: 50020
+
+---
+
+kind: StatefulSet
+apiVersion: apps/v1beta2
+metadata:
+  name: datanode
+  namespace: hdfs
+spec:
+  replicas: 4
+  serviceName: datanode
+  selector:
+    matchLabels:
+      app: hdfs
+      component: datanode
+  template:
+    metadata:
+      labels:
+        app: hdfs
+        component: datanode
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: hdfs-dn
+          image: dockerce/hdfs:2.7.5
+          imagePullPolicy: IfNotPresent
+          ports:
+          - name: webui
+            containerPort: 50075
+          - name: data-transfer
+            containerPort: 50010
+          - name: ipc
+            containerPort: 50020
+          args:
+          - hdfs
+          - datanode
+          - -fs
+          - hdfs://namenode:9000 # or: hdfs://namenode.hdfs.svc.cluster.local
+          - -Ddfs.datanode.data.dir=/data/datanode
+          - -Ddfs.permissions.enabled=false
+          volumeMounts:
+          - name: hdfs-dn-data
+            mountPath: /data/datanode
+  volumeClaimTemplates:
+  - metadata:
+      name: hdfs-dn-data
+    spec:
+      storageClassName: rbd
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 200Gi

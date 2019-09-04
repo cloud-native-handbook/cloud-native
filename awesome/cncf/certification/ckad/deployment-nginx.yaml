@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: kdpd00201
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: lfccncf/nginx:1.12.2
+        env:
+        - name: NGINX_PORT
+          value: "8001"
+        ports:
+        - containerPort: 8001
+
+
+# kubectl create namespace kdpd00201
+# kubectl -n kdpd00201 run frontend --image=lfccncf/nginx:1.12.2 --env NGINX_PORT=8001 --port=8001 --replicas 3
+# kubectl -n kdpd00201 expose deployment/frontend --port=8001 --target-port=8001 --name frontend
