@@ -1,8 +1,6 @@
-# Dockerfile
+# Dockerfile 构建镜像示例
 
-## 示例
-
-`server.js`：
+## server.js
 
 ```js
 var http = require('http');
@@ -16,7 +14,7 @@ var www = http.createServer(handleRequest);
 www.listen(8080);
 ```
 
-`Dockerfile`：
+## Dockerfile
 
 ```dockerfile
 FROM node:6.14.2
@@ -25,7 +23,7 @@ COPY server.js .
 CMD node server.js
 ```
 
-构建镜像：
+## 构建镜像
 
 ```sh
 $ docker build -t hello-node:latest -f Dockerfile ./
