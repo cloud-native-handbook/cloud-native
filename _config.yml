@@ -30,8 +30,6 @@ exclude:
   - LICENSE
   - Gemfile
   - vendor
-  - node_modules
-  - _book
 
 plugins:
   - jekyll-readme-index

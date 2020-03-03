@@ -1,22 +1,43 @@
-language: node_js
-node_js:
-  - "13.2.0"
-cache: npm
+language: ruby
+rvm:
+  - 2.6.3
 
 install:
-  - npm install -g gitbook-cli@2.3.2
-  - gitbook install # install gitbook plugins from book.json
+  - bundle install
 
 script:
-  - gitbook build  # output build results to _book directory
-  - yes | cp ./favicon.ico _book/gitbook/images/favicon.ico # implement the function of custom-favicon plugin
+  - bundle exec jekyll build
+  # - bundle exec htmlproofer ./_site # check
 
+# branch whitelist, only for GitHub Pages
+branches:
+  only:
+  - master     # test the master branch
+
+env:
+  global:
+  - NOKOGIRI_USE_SYSTEM_LIBRARIES=true # speeds up installation of html-proofer
+
+addons:
+  apt:
+    packages:
+    - libcurl4-openssl-dev
+
+sudo: false # route your build to the container-based infrastructure for a faster build
+
+cache: bundler # caching bundler gem packages will speed up build
+
+# Optional: disable email notifications about the outcome of your builds
+notifications:
+  email: false
+
+# Push _site directory to gh-pages branch
 deploy:
-  local_dir: _book
   provider: pages
-  skip_cleanup: true
-  github_token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
-  keep_history: true
+  local_dir: _site
   target_branch: gh-pages
+  github_token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
+  skip_cleanup: true
+  keep_history: false          # Push force
   on:
-    branch: master
+    branch: master             # Source branch
