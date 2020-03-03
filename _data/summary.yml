@@ -1,0 +1,207 @@
+enable: true
+
+source: git # 页面源路径
+destination: git # 页面构建路径（相对于 site.destination）
+
+# 目录表
+catalog:
+  - name: 简介
+    path: README.md
+  - name: Landscape
+    path: landscape.md
+  - section: 应用定义与开发
+    collapse: true
+    docs:
+      - section: 数据库
+        collapse: true
+        docs:
+          - name: Cassandra
+            path: application/database/cassandra/README.md
+          - name: TiKV
+            path: application/database/tikv/README.md
+      - section: 流与消息处理
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: 应用定义与镜像构建
+        collapse: true
+        docs:
+          - name: Helm
+            path: application/app-definition&image-build/helm/README.md
+      - section: 持续集成与交互
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+  - section: 编排与管理
+    collapse: true
+    path: basics/README.md
+    docs:
+      - section: 调度与编排
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: 协调与服务发现
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: RPC
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: 服务代理
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: API 网关
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: 服务网格
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+  - section: 运行时
+    collapse: true
+    path: basics/README.md
+    docs:
+      - section: 容器运行时
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: 云原生存储
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: 云原生网络
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+  - section: 供应
+    collapse: true
+    docs:
+      - section: 自动化与配置
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: 容器注册表
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: 安全与合规性
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: 密钥管理
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+  - section: 可观测性与分析
+    collapse: true
+    docs:
+      - section: 监控
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: 日志
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: 追踪
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: 混沌工程
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+  - section: 平台
+    collapse: true
+    docs:
+      - section: K8S 发行版
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: K8S 托管平台
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: K8S 安装器
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: PaaS / 容器服务
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+  - section: Serverless
+    collapse: true
+    docs:
+      - section: 工具
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: 框架
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: 托管平台
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+      - section: 安装平台
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+  - section: 微服务
+    collapse: true
+    docs:
+      - section: 目录结构
+        collapse: false
+        docs:
+          - name: summary
+            path: README.md
+      - section: 数据文件
+        collapse: true
+        docs:
+          - name: summary
+            path: README.md
+  - section: Awesome
+    collapse: true
+    docs:
+      - name: 语法高亮
+        path: README.md
+
+# 重定向（oldpath: newpath）
+redirect:
+  - "cmds/git-branch/README.md": "cmd/git-branch.md"
+
+# 相关知识库
+relatives:
+  - kubernetes

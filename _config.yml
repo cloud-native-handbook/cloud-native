@@ -1,0 +1,73 @@
+url: https://githome.io
+baseurl: "/cloud-native-handbook" # It's the default
+
+name: 云原生指南
+name_en: Cloud Native Handbook
+title: 云原生指南
+keywords: "云原生指南、云原生最近实战"
+description: "云原生指南、云原生最近实战"
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  gfm_quirks: [paragraph_end, no_auto_typographic]
+  html_to_native: true
+  hard_wrap: false
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    disable: false # syntax highlighter 和 highlight.js 不应该同时引用
+  toc_levels: 2..3
+
+# Building settings
+permalink: pretty
+
+include: ["_assets", ".images"]
+
+exclude:
+  - CNAME
+  - CODE_OF_CONDUCT.md
+  - CONTRIBUTING.md
+  - LICENSE
+  - Gemfile
+  - vendor
+  - node_modules
+  - _book
+
+plugins:
+  - jekyll-readme-index
+  - jekyll-relative-links
+  - jekyll-sitemap
+  - jekyll-redirect-from
+
+# Front matter defaults
+defaults:
+  - scope:
+      path: ""
+      type: pages
+    values:
+      layout: book
+      toc_min: 2
+      toc_max: 3
+      tree: true
+      permalink: /:path/:basename:output_ext
+
+sass:
+  sass_dir: _scss
+  style: :compressed
+
+# readme_index:
+#   enabled: true
+#   remove_originals: true
+#   with_frontmatter: true
+
+#============================= more settings =============================#
+
+repourl: https://github.com/jinsyin/cloud-native-handbook
+copyright: Powered by Jinsyin
+
+# Site Language
+lang: "zh-cmn-Hans" # "zh-cmn-Hans" => 简体中文; "zh-cmn-Hant" => 繁体中文; "en" => English
+
+author:
+  name: Jinsyin
+  github: https://github.com/jinsyin

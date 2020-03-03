@@ -1,0 +1,6 @@
+# - name: 首页
+#   path: /
+#   enable: true
+- name: 知识库
+  path: https://knowledge.bs
+  enable: false

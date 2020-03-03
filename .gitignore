@@ -1,3 +1,15 @@
+# MacOS
 .DS_Store
+
+# Editor
 .vscode
+
+# Contents
 .misc
+
+# Jekyll
+.jekyll-metadata
+.jekyll-cache
+.bundle
+.sass-cache
+_site
