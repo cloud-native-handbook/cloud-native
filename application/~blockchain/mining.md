@@ -1,4 +1,4 @@
-用户请求表：935256
+# 用户请求表
 
 | username | GPUs | CPUs | Mem  | Storage |
 | yin      | 15   | 5    | 15Gi | 50Gi    |

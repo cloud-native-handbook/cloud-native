@@ -53,10 +53,10 @@ sass:
   sass_dir: _scss
   style: :compressed
 
-# readme_index:
-#   enabled: true
-#   remove_originals: true
-#   with_frontmatter: true
+readme_index:
+  enabled: true
+  remove_originals: true
+  with_frontmatter: true
 
 #============================= more settings =============================#
 
