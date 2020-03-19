@@ -1,8 +1,26 @@
+---
+---
 # Landscape
 
 ![Cloud Native Landscape](.images/cloud-native-landscape.png)
 
+<!--
+
 ## 毕业项目（Graduated Projects）
+
+<div class="wrapper">
+    <div class="graduated">
+        <a href="orchestration/kubernetes/README.md" class="link">
+            <img src="{{ 'orchestration/.images/logos/kubernetes.svg' | relative_url }}" class="graduated-img">
+            <div class="graduated-tips">Orchestration · Kubernetes</div>
+        </a>
+    </div>
+    <div style="clear:both"></div>
+</div>
+
+## 孵化项目（Incubating Projects）
+
+## 沙盒项目（Sandbox Projects）
 
 <style type="text/css">
     .wrapper {
@@ -90,22 +108,4 @@
     }
 </style>
 
-<div class="wrapper">
-    <div class="graduated">
-        <a href="orchestration/kubernetes/README.md" class="link">
-            <img src="orchestration/.images/logos/kubernetes.svg" class="graduated-img">
-            <div class="graduated-tips">Orchestration · Kubernetes</div>
-        </a>
-    </div>
-    <div style="clear:both"></div>
-</div>
-
-## 孵化项目（Incubating Projects）
-
-## 沙盒项目（Sandbox Projects）
-
-<!--
-## Todo
-
-* 使用 HTML 代替图片，并链接到相应项目
 -->
