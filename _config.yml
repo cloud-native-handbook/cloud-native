@@ -21,7 +21,7 @@ kramdown:
 # Building settings
 permalink: pretty
 
-include: [".assets", ".images"]
+include: [".assets", ".images", ".nojekyll"]
 
 exclude:
   - CNAME
