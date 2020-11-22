@@ -1,4 +1,4 @@
-# Kubernetes 集群自动化安装工具
+# Kubernetes 安装器
 
 ## 已认证
 

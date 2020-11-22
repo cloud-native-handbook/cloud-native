@@ -2,6 +2,7 @@
 
 ## 其他人考试记录
 
+```txt
 > deploy a container on all nodes and do not make changes to existing taints.
 > Search for a specific string in the pod logs and write it to a file.
 > Debug an issue where worker node is NotReady and make the changes permanent (kubelet was not running,)
@@ -9,8 +10,9 @@
 > Start a Pod and fail the container until a file is present. Create initContainer to do the task. (Mount the volume in initContainer and create the file under mountPath.)
 > List all pvs and sort by the name and write to a file.
 > Check which pod is consuming more cpu in a namespace and write the most consuming pod to a file (Hint: use kubectl top pod -n <namespace>).
-> Filter the pods by label and print only pod names (Using -l <label> and --jsonpath=‘{{.items[*]}}{“\n”}}{{.metadata.name}}“’)
+> Filter the pods by label and print only pod names (Using -l <label> and --jsonpath='\{\{.items[*]\}\}{"\n"\}\}\{\{.metadata.name\}\}"')
 > Create a pod, service under as static pods, using manifests. (Hint: Update systemd kubelet.service file with pod-manifests-path flag path to manifests folder location.)
+```
 
 ## 参考
 
