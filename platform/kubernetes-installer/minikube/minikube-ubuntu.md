@@ -214,6 +214,99 @@ $ ls ~/.minikube
 $ ls /var/lib/localkube
 ```
 
+## 配置静态路由
+
+```bash
+# 查询 Service CIDR
+$ kubectl cluster-info dump | grep -m 1 service-cluster-ip-range
+"--service-cluster-ip-range=10.96.0.0/12",
+```
+
+```bash
+# 查询 Pod CIDR
+# Driver 为 docker 时，CIDR 应该为 docker0 的 cidr
+```
+
+```bash
+# 查询 'minikube' 容器的 IP
+$ docker inspect minikube | grep IPAddress
+"IPAddress": "192.168.49.2"
+```
+
+```bash
+# 添加静态路由
+$ sudo route add -net 10.96.0.0/12 gw 192.168.49.2
+```
+
+添加后就已经可以访问到 Service 的 ClusterIP 了。
+
+### 配置域名访问
+
+查询 coredns 根域名：
+
+```bash
+# 默认是 .cluster.local
+$ kubectl -n kube-system get configmap/coredns -o jsonpath='{.data.Corefile}'
+```
+
+```bash
+# 查询 kube-dns（默认是 CoreDNS） 的 Service ClusterIP
+$ kubectl -n kube-system get service/kube-dns -o jsonpath='{.spec.clusterIP}'
+10.96.0.10
+```
+
+测试解析一个 Service 的域名：
+
+```bash
+$ nslookup kube-dns.kube-system.svc.cluster.local 10.96.0.10
+Server:		10.96.0.10
+Address:	10.96.0.10#53
+
+Name:	kube-dns.kube-system.svc.cluster.local
+Address: 10.96.0.10
+```
+
+```bash
+$ dig kube-dns.kube-system.svc.cluster.local @10.96.0.10
+```
+
+添加 kube-dns 的 ClusterIP 到本地 nameserver 中：
+
+```bash
+# 持久化 https://www.tecmint.com/set-permanent-dns-nameservers-in-ubuntu-debian/
+$ sudo echo "10.96.0.10" >> /etc/resolv.conf
+```
+
+解决 `.local` 域名无法解析的问题：
+
+1. 方法一：使用 dnsmasq 本地搭建一个 dns server，在添加 `.cluster.local` 存根域。详见 https://github.com/cloud-native-handbook/cloud-native/blob/master/management/service-discovery/!dnsmasq/README.md
+2. 方法二：
+
+```bash
+# https://askubuntu.com/questions/1068131/ubuntu-18-04-local-domain-dns-lookup-not-working
+$ sudo vim /etc/avahi/avahi-daemon.conf
+[server]
+domain-name=.alocal
+
+$ sudo vim /etc/systemd/resolved.conf
+[Resolve]
+...
+Domains=cluster.local
+...
+
+$ sudo systemctl restart systemd-resolved avahi-daemon
+```
+
+测试：
+
+```bash
+# 不指定 dns server
+$ nslookup kube-dns.kube-system.svc.cluster.local # 不工作也可能是正常的
+$ dig kube-dns.kube-system.svc.cluster.local
+```
+
+最好是访问以下 HTTP 服务进行验证。
+
 ## 清除
 
 ```bash
